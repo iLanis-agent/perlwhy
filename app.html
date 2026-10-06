@@ -68,7 +68,7 @@ function render() {
     res = PerlWhy.evaluate(ast, ENV);
     const shown = PerlWhy.fmt(res);
     h += '<div class="card"><h2>Result in the sandbox</h2><div class="result">' +
-      (shown === '' ? '<span class="false">'' (false - the empty string, which is why it prints as nothing)</span>' : esc(JSON.stringify(shown))) +
+      (shown === '' ? '<span class="false">the empty string (perl false) - it prints as nothing</span>' : esc(JSON.stringify(shown))) +
       '</div></div>';
   } catch (e) {
     h += '<div class="card"><h2>Result</h2><p class="err">' + esc(e.message) + '</p></div>';
