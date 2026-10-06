@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PerlWhy</title>
+<style>
+  :root { --bg:#141119; --card:#1d1826; --ink:#efeaf7; --dim:#a79fb8; --acc:#c084fc; --acc2:#7dd3fc;
+          --ok:#34d399; --warn:#fbbf24; --info:#60a5fa; --line:#2e2740; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .wrap { max-width:900px; margin:0 auto; padding:28px 20px 64px; }
+  .top { display:flex; align-items:baseline; gap:12px; margin-bottom:18px; }
+  h1 { font-size:26px; margin:0; }
+  .top a { color:var(--dim); font-size:14px; text-decoration:none; }
+  .top a:hover { color:var(--acc2); }
+  textarea { width:100%; height:56px; background:#0d0a12; color:#e5d9f5; border:1px solid var(--line); border-radius:10px;
+             font:15px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; padding:12px; }
+  .env { font:13px ui-monospace, Menlo, monospace; color:var(--dim); margin:8px 0 2px; }
+  .env b { color:var(--acc2); font-weight:600; }
+  .presets { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 6px; }
+  .presets button { background:#241c33; color:var(--dim); border:1px solid var(--line); border-radius:8px; padding:6px 12px;
+                    font-size:13px; cursor:pointer; font-family:ui-monospace, Menlo, monospace; }
+  .presets button:hover { color:var(--ink); border-color:var(--acc2); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin:14px 0; }
+  .card h2 { margin:0 0 10px; font-size:15px; text-transform:uppercase; letter-spacing:1px; color:var(--dim); }
+  .parse { font:16px/1.6 ui-monospace, Menlo, monospace; color:var(--acc); background:#0d0a12; padding:12px 14px; border-radius:8px; overflow-x:auto; }
+  .result { font:600 16px ui-monospace, Menlo, monospace; color:var(--ok); }
+  .result .false { color:var(--warn); }
+  .note { padding:8px 12px; border-radius:8px; margin:6px 0; font-size:14.5px; border-left:3px solid; }
+  .note.ok { background:rgba(52,211,153,.08); border-color:var(--ok); }
+  .note.warn { background:rgba(251,191,36,.08); border-color:var(--warn); }
+  .note.info { background:rgba(96,165,250,.08); border-color:var(--info); }
+  .err { color:#f87171; padding:8px 0; font-size:14.5px; }
+  .muted { color:var(--dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>PerlWhy</h1><a href="index.html">&larr; what is this</a></div>
+  <textarea id="inp" spellcheck="false" placeholder="$a + $b * $c"></textarea>
+  <div class="env">sandbox: <b>$a</b>=3 <b>$b</b>=5 <b>$c</b>=2 <b>$s</b>="foo" <b>$t</b>="bar" &middot; numbers, strings, and the perlop operators</div>
+  <div class="presets" id="presets"></div>
+  <div id="out"></div>
+</div>
+<script src="engine.js?v=372"></script>
+<script>
+const PRESETS = {"$a + $b * $c": "$a + $b * $c", "$a ** $b ** $c": "$a ** $b ** $c", "-$a ** $b": "-$a ** $b", "$s x $a . $t": "$s x $a . $t", "not $a || $b": "not $a || $b", "$a || $b and $c": "$a || $b and $c", "uc $s . $t": "uc $s . $t", "abs -$a * $b": "abs -$a * $b", "!$a == $b": "!$a == $b", "$a ? $s : $t ? $s : $t": "$a ? $s : $t ? $s : $t", "$a // $b": "$a // $b", "$a <=> $b": "$a <=> $b", "$s | $t": "$s | $t", "not $s eq $t": "not $s eq $t", "$a << $c >> 1": "$a << $c >> 1", "length $s": "length $s", "chain: $a <=> $b <=> $c": "$a <=> $b <=> $c", "chain: $s cmp $t cmp $s": "$s cmp $t cmp $s"};
+const ENV = { a: 3, b: 5, c: 2, s: 'foo', t: 'bar' };
+const inp = document.getElementById('inp');
+const out = document.getElementById('out');
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+function render() {
+  const src = inp.value.trim();
+  if (!src) { out.innerHTML = ''; return; }
+  let h = '';
+  let ast;
+  try {
+    ast = PerlWhy.parse(src);
+  } catch (e) {
+    out.innerHTML = '<div class="card"><h2>Parse</h2><p class="err">' + esc(e.message) + '</p></div>';
+    return;
+  }
+  h += '<div class="card"><h2>The parse perl reports (B::Deparse -p style)</h2><div class="parse">' + esc(PerlWhy.render(ast)) + '</div></div>';
+  let res;
+  try {
+    res = PerlWhy.evaluate(ast, ENV);
+    const shown = PerlWhy.fmt(res);
+    h += '<div class="card"><h2>Result in the sandbox</h2><div class="result">' +
+      (shown === '' ? '<span class="false">'' (false - the empty string, which is why it prints as nothing)</span>' : esc(JSON.stringify(shown))) +
+      '</div></div>';
+  } catch (e) {
+    h += '<div class="card"><h2>Result</h2><p class="err">' + esc(e.message) + '</p></div>';
+  }
+  const notes = PerlWhy.explain(src, ast);
+  if (notes.length) {
+    h += '<div class="card"><h2>Traps in play</h2>' + notes.map(n => `<div class="note ${n.sev}">${esc(n.text)}</div>`).join('') + '</div>';
+  }
+  out.innerHTML = h;
+}
+
+const pr = document.getElementById('presets');
+for (const name of Object.keys(PRESETS)) {
+  const b = document.createElement('button');
+  b.textContent = name;
+  b.onclick = () => { inp.value = PRESETS[name]; render(); };
+  pr.appendChild(b);
+}
+inp.addEventListener('input', render);
+inp.value = PRESETS['not $a || $b'];
+render();
+</script>
+</body>
+</html>
