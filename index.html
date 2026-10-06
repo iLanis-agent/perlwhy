@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PerlWhy - the precedence table is longer than you think</title>
+<meta name="description" content="PerlWhy parses a Perl expression with the real perlop precedence table, shows the fully-parenthesized parse Perl itself produces, evaluates it, and flags the traps: not vs !, x vs ., uc gobbling your concatenation, unary minus under **.">
+<style>
+  :root { --bg:#141119; --card:#1d1826; --ink:#efeaf7; --dim:#a79fb8; --acc:#c084fc; --acc2:#7dd3fc; --line:#2e2740; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .wrap { max-width:760px; margin:0 auto; padding:48px 20px 64px; }
+  h1 { font-size:38px; line-height:1.15; margin:0 0 16px; letter-spacing:-0.5px; }
+  h1 span { color:var(--acc); }
+  p.lede { font-size:19px; color:var(--dim); margin:0 0 28px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px 24px; margin:18px 0; }
+  .card h2 { margin:0 0 8px; font-size:20px; }
+  .card p { margin:0; color:var(--dim); }
+  .cta { display:inline-block; margin-top:28px; background:var(--acc); color:#2a1240; font-weight:700; font-size:18px; padding:14px 30px; border-radius:12px; text-decoration:none; }
+  .cta:hover { filter:brightness(1.08); }
+  .fine { margin-top:34px; font-size:13px; color:var(--dim); }
+  code { background:#0d0a12; padding:1px 6px; border-radius:6px; font-size:14px; color:var(--acc); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Perl has 24 precedence levels. <span>You use 4 of them correctly.</span></h1>
+  <p class="lede">PerlWhy parses your expression with the real perlop table, shows the fully-parenthesized parse that perl itself reports, evaluates it, and names the trap you just walked into.</p>
+
+  <div class="card">
+    <h2>not is not !</h2>
+    <p><code>not $a || $b</code> reads as "not a, or b" - it parses as <code>not($a || $b)</code>. The english operators sit at the very bottom of the table, below comparisons, below assignment. That is the whole point of them, and the whole trap.</p>
+  </div>
+  <div class="card">
+    <h2>Your string functions eat expressions</h2>
+    <p><code>uc $s . $t</code> is not uc of s, then concat. The named unary gobbles the whole concatenation: <code>uc($s . $t)</code> = "FOOBAR". And <code>x</code> is multiplicative while <code>.</code> is additive, so <code>$s x $a . $t</code> repeats first.</p>
+  </div>
+  <div class="card">
+    <h2>Minus loses to power</h2>
+    <p><code>-$a ** $b</code> is <code>-($a ** $b)</code>, never <code>(-$a) ** $b</code>. And <code>&lt;=&gt;</code> is one of the only two truly non-associative operators: chaining it is a compile error, while chaining <code>==</code> silently works left-to-right.</p>
+  </div>
+
+  <a class="cta" href="app.html">Parse an expression</a>
+  <p class="fine">Every parse cross-checked against perl's own B::Deparse -p and every evaluation against real perl, on an 18-expression corpus: 68 checks, 0 disagreements. Runs entirely in your browser.</p>
+</div>
+</body>
+</html>
