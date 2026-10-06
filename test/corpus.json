@@ -1,0 +1,20 @@
+[
+  {"name": "precedence-mul", "expr": "$a + $b * $c", "eval": true, "notes": []},
+  {"name": "power-right-assoc", "expr": "$a ** $b ** $c", "eval": false, "notes": []},
+  {"name": "unary-minus-power", "expr": "-$a ** $b", "eval": false, "notes": ["LOOSER"]},
+  {"name": "repeat-then-concat", "expr": "$s x $a . $t", "eval": true, "notes": ["x is multiplicative"]},
+  {"name": "not-vs-symbolic", "expr": "not $a || $b", "eval": true, "notes": ["Mixing english"]},
+  {"name": "and-under-or", "expr": "$a || $b and $c", "eval": true, "notes": ["Mixing english"]},
+  {"name": "uc-gobbles-concat", "expr": "uc $s . $t", "eval": true, "notes": ["Named unary"]},
+  {"name": "abs-gobbles-product", "expr": "abs -$a * $b", "eval": true, "notes": ["Named unary"]},
+  {"name": "bang-vs-eqeq", "expr": "!$a == $b", "eval": true, "notes": []},
+  {"name": "ternary-right-assoc", "expr": "$a ? $s : $t ? $s : $t", "eval": true, "notes": []},
+  {"name": "defined-or", "expr": "$a // $b", "eval": true, "notes": ["defined-or"]},
+  {"name": "spaceship", "expr": "$a <=> $b", "eval": true, "notes": ["non-associative"]},
+  {"name": "string-bitwise", "expr": "$s | $t", "eval": true, "notes": []},
+  {"name": "not-vs-bang", "expr": "not $s eq $t", "eval": true, "notes": []},
+  {"name": "shifts", "expr": "$a << $c >> 1", "eval": true, "notes": []},
+  {"name": "length-unary", "expr": "length $s", "eval": true, "notes": ["Named unary"]},
+  {"name": "err-chained-spaceship", "expr": "$a <=> $b <=> $c", "error": true, "notes": []},
+  {"name": "err-chained-cmp", "expr": "$s cmp $t cmp $s", "error": true, "notes": []}
+]
